@@ -87,6 +87,7 @@ Look inside the client application directories for boilerplate helper classes th
 * **`FlutterApi.dart`**: Contains a cross-platform implementation utilizing the `flutter_blue_plus` package ecosystem.
 
 * **`CutebotAndroidSample`**: Contains a complete example application using the `AndroidApi.kt`.
+* **`CutebotFlutterSample`**: Contains a complete example application using the `FlutterApi.kt`. Please note this sample has only been tested on Android
 
 ## Connecting to the Robot
 Make sure you have first paired the robot with your phone before running your app, the robot will need to be connected first. 

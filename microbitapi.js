@@ -7,8 +7,8 @@ let strip = neopixel.create(DigitalPin.P15, 2, NeoPixelMode.RGB)
 bluetooth.startUartService()
 basic.showIcon(IconNames.Happy)
 
-bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), function () {
-    let rawStr = bluetooth.uartReadUntil(serial.delimiters(Delimiters.NewLine))
+bluetooth.onUartDataReceived("#", function () {
+    let rawStr = bluetooth.uartReadUntil("#")
 
     let parts = rawStr.split(",")
     let cmd = parts[0]
@@ -65,13 +65,6 @@ bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), function () 
             strip.showColor(neopixel.rgb(rUnder, gUnder, bUnder))
         }
 
-    } else if (cmd == "BEEP") {
-        music.playTone(523, music.beat(BeatFraction.Quarter))
-    } else if (cmd == "SIREN") {
-        for (let i = 0; i < 2; i++) {
-            music.playTone(880, music.beat(BeatFraction.Quarter))
-            music.playTone(587, music.beat(BeatFraction.Quarter))
-        }
     } else if (cmd == "?DIST") {
         let distance = cuteBot.ultrasonic(cuteBot.SonarUnit.Centimeters)
         bluetooth.uartWriteString("DIST:" + distance + "\n")

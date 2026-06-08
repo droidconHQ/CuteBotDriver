@@ -1,3 +1,5 @@
+package com.example.cutebotandroidsample
+
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic

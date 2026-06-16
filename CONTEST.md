@@ -55,6 +55,7 @@ The robot uses a standard Nordic UART Service (Service UUID: `6E400001-B5A3-F393
 | :--- | :--- |
 | `F`, `B`, `L`, `R`, `S` | Forward, Backward, Left, Right, Stop |
 | `ML,[speed]` / `MR,[speed]` | Set motor speed (-100 to 100) |
+| `MS,[left-speed],[right-speed]` | Set both Motor speeds (-100 to 100) |
 | `HL,[r],[g],[b]` | Set headlights |
 | `UG,[r],[g],[b]` | Set underglow lights |
 | `HO` | Lights off |

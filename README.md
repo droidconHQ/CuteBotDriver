@@ -50,6 +50,7 @@ The micro:bit hosts a standard Nordic UART Service. Commands are sent from the m
 | `S` | Stop both motors immediately | `S#` |
 | `ML,[speed]` | Set Left Motor speed (-100 to 100) | `ML,75#` |
 | `MR,[speed]` | Set Right Motor speed (-100 to 100) | `MR,-40#` |
+| `MS,[left-speed],[right-speed]` | Set both Motor speeds (-100 to 100) | `MS,-40,40#` |
 
 ### 2. Lighting Commands
 

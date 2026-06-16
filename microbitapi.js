@@ -44,7 +44,12 @@ bluetooth.onUartDataReceived("#", function () {
             rightSpeed = parseInt(parts[1])
             cuteBot.motors(leftSpeed, rightSpeed)
         }
-
+    } else if (cmd == "MS") {
+        if (parts.length > 2) {
+            leftSpeed = parseInt(parts[1])
+            rightSpeed = parseInt(parts[2])
+            cuteBot.motors(leftSpeed, rightSpeed)
+        }
     } else if (cmd == "HL") {
         if (parts.length > 3) {
             let rHead = parseInt(parts[1])

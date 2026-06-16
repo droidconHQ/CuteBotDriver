@@ -41,6 +41,9 @@ object CutebotController {
     fun setLeftMotor(gatt: BluetoothGatt, speed: Int) = sendRawCommand(gatt, "ML,$speed")
     fun setRightMotor(gatt: BluetoothGatt, speed: Int) = sendRawCommand(gatt, "MR,$speed")
 
+    // Set both motors at once: MS,[left],[right]
+    fun setMotorSpeeds(gatt: BluetoothGatt, left: Int, right: Int) = sendRawCommand(gatt, "MS,$left,$right")
+
     // Lights (RGB: 0 to 255)
     fun setHeadlights(gatt: BluetoothGatt, r: Int, g: Int, b: Int) = sendRawCommand(gatt, "HL,$r,$g,$b")
     fun turnLightsOff(gatt: BluetoothGatt) = sendRawCommand(gatt, "HO")

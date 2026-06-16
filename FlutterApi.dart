@@ -49,6 +49,8 @@ class CutebotController {
   // Fine-grained motor control (-100 to 100)
   Future<void> setLeftMotor(int speed) => _sendCommand("ML,$speed");
   Future<void> setRightMotor(int speed) => _sendCommand("MR,$speed");
+  // Set both motors at once
+  Future<void> setMotorSpeeds(int left, int right) => _sendCommand("MS,$left,$right");
 
   // Lights (RGB: 0 to 255)
   Future<void> setHeadlights(int r, int g, int b) => _sendCommand("HL,$r,$g,$b");

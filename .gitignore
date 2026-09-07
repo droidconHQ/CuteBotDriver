@@ -32,3 +32,17 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Node / React Native
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Apple / Xcode
+.DS_Store
+*.xcuserstate
+xcuserdata/
+DerivedData/
+build/
+

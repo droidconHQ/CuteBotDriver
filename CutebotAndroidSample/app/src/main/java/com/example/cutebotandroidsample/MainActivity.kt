@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
@@ -33,7 +34,7 @@ class MainActivity : ComponentActivity() {
     private var connectionStatus by mutableStateOf("Disconnected")
 
     // MAC address of the robot you are connecting to
-    var deviceAddress by mutableStateOf("FF:1C:0A:C8:87:BE")
+    var deviceAddress by mutableStateOf("C1:CA:09:FC:A1:30")
 
     // Live Sensor Telemetry State (Updated via CutebotController.onTelemetry)
     private var telemetryDistance by mutableStateOf("--")
@@ -63,9 +64,18 @@ class MainActivity : ComponentActivity() {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 connectionStatus = "Ready to Drive"
                 activeGatt = gatt
-                // Automatically subscribe to TX characteristic notifications for telemetry
-                CutebotController.enableNotifications(gatt, true)
+                // Automatically subscribe to TX characteristic indications/notifications for telemetry
+                val subResult = CutebotController.enableNotifications(gatt, true)
+                android.util.Log.d("BLE", "enableNotifications result: $subResult")
             }
+        }
+
+        override fun onDescriptorWrite(
+            gatt: BluetoothGatt,
+            descriptor: BluetoothGattDescriptor,
+            status: Int
+        ) {
+            android.util.Log.d("BLE", "onDescriptorWrite for ${descriptor.uuid}: status=$status (0=GATT_SUCCESS)")
         }
 
         override fun onCharacteristicChanged(
@@ -91,15 +101,17 @@ class MainActivity : ComponentActivity() {
 
         // Setup telemetry listener from CutebotController API
         CutebotController.onTelemetry = { telemetry ->
-            when (telemetry) {
-                is CutebotTelemetry.Distance -> telemetryDistance = "${telemetry.cm} cm"
-                is CutebotTelemetry.LineTracker -> telemetryLine = telemetry.description
-                is CutebotTelemetry.Compass -> telemetryCompass = "${telemetry.degrees}°"
-                is CutebotTelemetry.Acceleration -> telemetryAccel = "${telemetry.x}, ${telemetry.y}, ${telemetry.z}"
-                is CutebotTelemetry.LightLevel -> telemetryLight = "${telemetry.level}"
-                is CutebotTelemetry.Temperature -> telemetryTemp = "${telemetry.celsius}°C"
-                is CutebotTelemetry.Pong -> telemetryPing = "PONG"
-                is CutebotTelemetry.Raw -> {}
+            runOnUiThread {
+                when (telemetry) {
+                    is CutebotTelemetry.Distance -> telemetryDistance = "${telemetry.cm} cm"
+                    is CutebotTelemetry.LineTracker -> telemetryLine = telemetry.description
+                    is CutebotTelemetry.Compass -> telemetryCompass = "${telemetry.degrees}°"
+                    is CutebotTelemetry.Acceleration -> telemetryAccel = "${telemetry.x}, ${telemetry.y}, ${telemetry.z}"
+                    is CutebotTelemetry.LightLevel -> telemetryLight = "${telemetry.level}"
+                    is CutebotTelemetry.Temperature -> telemetryTemp = "${telemetry.celsius}°C"
+                    is CutebotTelemetry.Pong -> telemetryPing = "PONG"
+                    is CutebotTelemetry.Raw -> {}
+                }
             }
         }
 

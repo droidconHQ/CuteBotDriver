@@ -68,31 +68,55 @@ object CutebotController {
         }
     }
 
-    // Enable telemetry notifications on the TX characteristic
+    // Enable telemetry notifications/indications on the TX characteristic
     @SuppressLint("MissingPermission")
     fun enableNotifications(gatt: BluetoothGatt, enable: Boolean = true): Boolean {
-        val service = gatt.getService(UART_SERVICE_UUID) ?: return false
+        val service = gatt.getService(UART_SERVICE_UUID) ?: run {
+            android.util.Log.e("BLE", "Failed to find UART Service!")
+            return false
+        }
         val txChar = service.getCharacteristic(UART_TX_CHAR_UUID) ?: run {
             android.util.Log.e("BLE", "Failed to find TX Characteristic!")
             return false
         }
         if (!gatt.setCharacteristicNotification(txChar, enable)) {
+            android.util.Log.e("BLE", "Failed to set characteristic notification/indication!")
             return false
         }
-        val descriptor = txChar.getDescriptor(CCCD_UUID) ?: return false
-        val descriptorVal = if (enable) {
-            BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-        } else {
-            BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+        val descriptor = txChar.getDescriptor(CCCD_UUID) ?: run {
+            android.util.Log.e("BLE", "Failed to find CCCD Descriptor!")
+            return false
         }
 
+        // micro:bit V2 uses INDICATE (not NOTIFY) on its UART TX characteristic.
+        // We determine whether to write ENABLE_INDICATION_VALUE or ENABLE_NOTIFICATION_VALUE based on characteristic properties.
+        val descriptorVal = when {
+            !enable -> BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+            (txChar.properties and BluetoothGattCharacteristic.PROPERTY_INDICATE) != 0 -> {
+                android.util.Log.d("BLE", "TX Characteristic supports INDICATE; enabling indications.")
+                BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
+            }
+            (txChar.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0 -> {
+                android.util.Log.d("BLE", "TX Characteristic supports NOTIFY; enabling notifications.")
+                BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+            }
+            else -> {
+                android.util.Log.w("BLE", "TX Characteristic properties (${txChar.properties}) did not match NOTIFY or INDICATE; defaulting to INDICATE.")
+                BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
+            }
+        }
+
+        @Suppress("DEPRECATION")
+        descriptor.value = descriptorVal
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            gatt.writeDescriptor(descriptor, descriptorVal) == BluetoothStatusCodes.SUCCESS
+            val status = gatt.writeDescriptor(descriptor, descriptorVal)
+            android.util.Log.d("BLE", "writeDescriptor (Tiramisu+) returned status: $status")
+            status == BluetoothStatusCodes.SUCCESS
         } else {
             @Suppress("DEPRECATION")
-            descriptor.value = descriptorVal
-            @Suppress("DEPRECATION")
-            gatt.writeDescriptor(descriptor)
+            val success = gatt.writeDescriptor(descriptor)
+            android.util.Log.d("BLE", "writeDescriptor returned success: $success")
+            success
         }
     }
 
@@ -105,12 +129,14 @@ object CutebotController {
      */
     fun handleNotification(bytes: ByteArray) {
         val chunk = String(bytes, Charsets.UTF_8)
+        android.util.Log.d("BLE", "Raw telemetry chunk received: $chunk")
         rxBuffer += chunk
         while (rxBuffer.contains("#")) {
             val packet = rxBuffer.substringBefore("#").trim()
             rxBuffer = rxBuffer.substringAfter("#")
             if (packet.isNotEmpty()) {
                 val parsed = parsePacket(packet)
+                android.util.Log.d("BLE", "Parsed telemetry packet: $parsed")
                 dispatchTelemetry(parsed)
             }
         }

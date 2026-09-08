@@ -135,12 +135,22 @@ public class CutebotController: NSObject, ObservableObject, CBCentralManagerDele
                 rxCharacteristic = characteristic
             } else if characteristic.uuid == CutebotController.uartTxUUID {
                 txCharacteristic = characteristic
-                // Automatically subscribe to TX notifications
+                // Automatically subscribe to TX indications/notifications.
+                // Note: BBC micro:bit V2 uses INDICATE on TX. CoreBluetooth automatically inspects
+                // characteristic properties and sets the appropriate CCCD bit (0x02 for indicate) via setNotifyValue.
                 peripheral.setNotifyValue(true, for: characteristic)
             }
         }
         if rxCharacteristic != nil && txCharacteristic != nil {
             connectionStatus = "Ready to Drive"
+        }
+    }
+
+    public func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
+        if let error = error {
+            print("[Cutebot BLE] Failed to update notification/indication state for \(characteristic.uuid): \(error.localizedDescription)")
+        } else {
+            print("[Cutebot BLE] Successfully subscribed to \(characteristic.uuid) (isNotifying: \(characteristic.isNotifying))")
         }
     }
 
@@ -151,6 +161,7 @@ public class CutebotController: NSObject, ObservableObject, CBCentralManagerDele
             return
         }
 
+        print("[Cutebot BLE] Raw telemetry chunk received: \(chunk)")
         rxBuffer += chunk
         while rxBuffer.contains("#") {
             guard let hashIndex = rxBuffer.firstIndex(of: "#") else { break }
@@ -159,6 +170,7 @@ public class CutebotController: NSObject, ObservableObject, CBCentralManagerDele
 
             if !packet.isEmpty {
                 let parsed = parseTelemetryPacket(packet)
+                print("[Cutebot BLE] Parsed telemetry packet: \(parsed)")
                 DispatchQueue.main.async { [weak self] in
                     self?.latestTelemetry = parsed
                     self?.onTelemetry?(parsed)
@@ -211,8 +223,10 @@ public class CutebotController: NSObject, ObservableObject, CBCentralManagerDele
         guard let targetPeripheral = targetPeripheral,
               let rxCharacteristic = rxCharacteristic,
               let data = "\(command)#".data(using: .utf8) else {
+            print("[Cutebot BLE] Target peripheral or RX characteristic not available for command: \(command)")
             return
         }
+        print("[Cutebot BLE] Transmitting: \(command)")
         targetPeripheral.writeValue(data, for: rxCharacteristic, type: .withoutResponse)
     }
 

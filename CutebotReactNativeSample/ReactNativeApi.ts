@@ -91,15 +91,22 @@ export class CutebotController {
   public async init(): Promise<void> {
     await this.device.discoverAllServicesAndCharacteristics();
 
-    // Subscribe to incoming notifications on TX characteristic
+    // Subscribe to incoming indications/notifications on TX characteristic
+    // Note: BBC micro:bit V2 uses INDICATE on TX. react-native-ble-plx automatically inspects
+    // characteristic properties and sets the appropriate CCCD descriptor value (0x02 for indicate).
     this.monitorSubscription = this.device.monitorCharacteristicForService(
       CutebotController.UART_SERVICE_UUID,
       CutebotController.UART_TX_CHAR_UUID,
       (error, characteristic) => {
-        if (error || !characteristic?.value) {
+        if (error) {
+          console.error('[Cutebot BLE] Telemetry monitor error:', error);
+          return;
+        }
+        if (!characteristic?.value) {
           return;
         }
         const chunk = base64ToUtf8(characteristic.value);
+        console.log('[Cutebot BLE] Raw telemetry chunk received:', chunk);
         this.handleIncomingChunk(chunk);
       }
     );
@@ -116,6 +123,13 @@ export class CutebotController {
     this.rxBuffer = '';
   }
 
+  /**
+   * Reset incoming buffer (e.g. on disconnect)
+   */
+  public resetBuffer(): void {
+    this.rxBuffer = '';
+  }
+
   private handleIncomingChunk(chunk: string): void {
     this.rxBuffer += chunk;
     while (this.rxBuffer.includes('#')) {
@@ -125,6 +139,7 @@ export class CutebotController {
 
       if (packet.length > 0) {
         const telemetry = this.parseTelemetryPacket(packet);
+        console.log('[Cutebot BLE] Parsed telemetry packet:', telemetry);
         this.dispatchTelemetry(telemetry);
       }
     }
@@ -215,6 +230,7 @@ export class CutebotController {
    * Sends a raw UTF-8 command to the robot terminated by '#'.
    */
   public async sendRawCommand(command: string): Promise<void> {
+    console.log('[Cutebot BLE] Transmitting:', command);
     const base64Payload = utf8ToBase64(`${command}#`);
     await this.device.writeCharacteristicWithoutResponseForService(
       CutebotController.UART_SERVICE_UUID,

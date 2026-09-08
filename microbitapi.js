@@ -36,7 +36,7 @@ bluetooth.onUartDataReceived("#", function () {
     }
 
     let parts = rawStr.split(",")
-    let cmd = parts[0]
+    let cmd = parts[0].trim()
 
     // ==========================================
     // 1. Movement Controls
@@ -213,6 +213,8 @@ bluetooth.onUartDataReceived("#", function () {
         }
         bluetooth.uartWriteString("LINE:" + lineStatus + "#\n")
     } else if (cmd == "?COMPASS") {
+        // Note: BBC micro:bit automatically triggers a one-time "TILT TO FILL SCREEN"
+        // calibration routine if the magnetometer has not been calibrated since flashing.
         let heading = input.compassHeading()
         bluetooth.uartWriteString("COMPASS:" + heading + "#\n")
     } else if (cmd == "?ACCEL") {

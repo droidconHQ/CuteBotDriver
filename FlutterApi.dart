@@ -89,23 +89,34 @@ class CutebotController {
 
     if (_notifyCharacteristic != null) {
       try {
+        // BBC micro:bit V2 uses INDICATE (not NOTIFY) on its UART TX characteristic.
+        // flutter_blue_plus inspects characteristic.properties and enables indications or notifications automatically.
         await _notifyCharacteristic!.setNotifyValue(true);
+        print("[Cutebot BLE] Successfully subscribed to TX indications/notifications.");
         _notifySubscription = _notifyCharacteristic!.onValueReceived.listen((bytes) {
-          _rxBuffer += utf8.decode(bytes, allowMalformed: true);
+          final chunk = utf8.decode(bytes, allowMalformed: true);
+          print("[Cutebot BLE] Raw telemetry chunk received: $chunk");
+          _rxBuffer += chunk;
           while (_rxBuffer.contains("#")) {
-            final parts = _rxBuffer.split("#");
-            final packet = parts[0].trim();
-            _rxBuffer = parts.sublist(1).join("#");
+            final hashIndex = _rxBuffer.indexOf("#");
+            final packet = _rxBuffer.substring(0, hashIndex).trim();
+            _rxBuffer = _rxBuffer.substring(hashIndex + 1);
             if (packet.isNotEmpty) {
               final telemetry = _parsePacket(packet);
+              print("[Cutebot BLE] Parsed telemetry packet: $telemetry");
               _telemetryController.add(telemetry);
             }
           }
         });
-      } catch (_) {
-        // Notification subscription error
+      } catch (e) {
+        print("[Cutebot BLE] Error subscribing to TX characteristic: $e");
       }
     }
+  }
+
+  /// Reset the incoming buffer (e.g. on disconnect)
+  void resetBuffer() {
+    _rxBuffer = "";
   }
 
   CutebotTelemetry _parsePacket(String packet) {
@@ -151,8 +162,10 @@ class CutebotController {
 
   Future<void> sendRawCommand(String command) async {
     if (_writeCharacteristic == null) {
+      print("[Cutebot BLE] Write characteristic not available for command: $command");
       return;
     }
+    print("[Cutebot BLE] Transmitting: $command");
     final bytes = utf8.encode("$command#");
     await _writeCharacteristic!.write(bytes, withoutResponse: true);
   }

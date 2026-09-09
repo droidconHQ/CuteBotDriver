@@ -1,6 +1,6 @@
-# 🏁 The Next App Robot Rallye 2026
+# 🏁 The Next App Robot Rally 2026
 
-Welcome to the official **Next App Robot Rallye**! ([nextappcon.com](https://www.nextappcon.com/))
+Welcome to the official **Next App Robot Rally**! ([nextappcon.com](https://www.nextappcon.com/))
 
 We are challenging developers across every ecosystem—**Android**, **iOS**, **Flutter**, and **React Native**—to take our custom-built Elecfreaks Cutebot robot car platform and code the fastest, smartest, and most innovative mobile controller app to conquer our race track printed on the floor.
 

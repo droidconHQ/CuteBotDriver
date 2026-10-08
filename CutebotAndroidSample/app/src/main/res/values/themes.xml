@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.CutebotAndroidSample" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+      Dark, chrome-free shell. The window background matches the Compose carbon ground so
+      launching the app does not flash white in a darkened workshop, and no action bar
+      competes with the in-app header for vertical space the joystick needs.
+    -->
+    <style name="Theme.CutebotAndroidSample" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/carbon</item>
+        <item name="android:statusBarColor">@color/carbon</item>
+        <item name="android:navigationBarColor">@color/carbon</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
 </resources>

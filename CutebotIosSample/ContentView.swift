@@ -6,6 +6,7 @@ struct ContentView: View {
 
     @State private var driveSpeed: Double = 60
     @State private var showingDeviceSheet = false
+    @State private var deviceAddress: String = "C1:CA:09:FC:A1:30"
 
     // Live Telemetry Readings
     @State private var distReading: String = "--"
@@ -32,13 +33,24 @@ struct ContentView: View {
                                 .foregroundColor(controller.isConnected ? .green : .red)
                         }
 
+                        // Connection Card (Like-for-like with Android / Flutter)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Robot MAC Address / Device ID")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+
+                            TextField("e.g. C1:CA:09:FC:A1:30 or [povap]", text: $deviceAddress)
+                                .textFieldStyle(.roundedBorder)
+                                .autocapitalization(.none)
+                                .disableAutocorrection(true)
+                        }
+
                         Button(action: {
-                            controller.startScanning()
-                            showingDeviceSheet = true
+                            controller.connect(toAddressOrName: deviceAddress)
                         }) {
-                            Label(controller.isConnected ? "Change Robot" : "Scan & Connect", systemImage: "antenna.radiowaves.left.and.right")
+                            Text(controller.isConnected ? "Reconnect to Robot" : "Connect to Robot")
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
+                                .padding(.vertical, 8)
                         }
                         .buttonStyle(.borderedProminent)
                     }
@@ -208,6 +220,16 @@ struct ContentView: View {
                 .padding()
             }
             .navigationTitle("Cutebot Controller")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        controller.startScanning()
+                        showingDeviceSheet = true
+                    }) {
+                        Image(systemName: "antenna.radiowaves.left.and.right")
+                    }
+                }
+            }
             .sheet(isPresented: $showingDeviceSheet) {
                 DeviceScanSheet(controller: controller, isPresented: $showingDeviceSheet)
             }

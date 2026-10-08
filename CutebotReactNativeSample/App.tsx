@@ -4,6 +4,7 @@ import {
   ScrollView,
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   PermissionsAndroid,
@@ -19,6 +20,7 @@ export default function App(): JSX.Element {
   const [connectionStatus, setConnectionStatus] = useState<string>('Disconnected');
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [driveSpeed, setDriveSpeed] = useState<number>(60);
+  const [deviceAddress, setDeviceAddress] = useState<string>('C1:CA:09:FC:A1:30');
 
   // Live Telemetry State
   const [distReading, setDistReading] = useState<string>('--');
@@ -94,7 +96,8 @@ export default function App(): JSX.Element {
       return;
     }
 
-    setConnectionStatus('Scanning for micro:bit...');
+    const target = deviceAddress.trim().toLowerCase();
+    setConnectionStatus(target ? `Searching for ${deviceAddress.trim()}...` : 'Scanning for micro:bit...');
     const manager = bleManagerRef.current;
     if (!manager) return;
 
@@ -107,9 +110,22 @@ export default function App(): JSX.Element {
           return;
         }
 
-        if (device && (device.name?.includes('micro:bit') || device.name?.includes('BBC'))) {
+        if (!device) return;
+
+        const devId = (device.id || '').toLowerCase();
+        const devName = (device.name || '').toLowerCase();
+        const isMicrobit = devName.includes('micro:bit') || devName.includes('bbc');
+
+        // Match by MAC address / UUID or by robot name / 5-letter ID
+        const isMatch =
+          devId === target ||
+          devName.includes(target) ||
+          (target.length > 0 && target.includes(devName)) ||
+          (!target && isMicrobit);
+
+        if (isMatch) {
           manager.stopDeviceScan();
-          setConnectionStatus(`Connecting to ${device.name}...`);
+          setConnectionStatus(`Connecting to ${device.name || device.id}...`);
 
           try {
             const connectedDevice = await device.connect();
@@ -149,14 +165,25 @@ export default function App(): JSX.Element {
           Status: {connectionStatus}
         </Text>
 
-        {/* Connection Button */}
-        <TouchableOpacity
-          style={[styles.primaryButton, isConnected && styles.connectedButton]}
-          onPress={scanAndConnect}>
-          <Text style={styles.primaryButtonText}>
-            {isConnected ? 'Reconnect to Robot' : 'Scan & Connect'}
-          </Text>
-        </TouchableOpacity>
+        {/* Connection Card (Like-for-like with Android / Flutter) */}
+        <View style={styles.connectionCard}>
+          <Text style={styles.inputLabel}>Robot MAC Address / Device ID</Text>
+          <TextInput
+            style={styles.textInput}
+            value={deviceAddress}
+            onChangeText={setDeviceAddress}
+            placeholder="e.g. C1:CA:09:FC:A1:30 or [povap]"
+            autoCapitalize="characters"
+            autoCorrect={false}
+          />
+          <TouchableOpacity
+            style={[styles.primaryButton, isConnected && styles.connectedButton]}
+            onPress={scanAndConnect}>
+            <Text style={styles.primaryButtonText}>
+              {isConnected ? 'Reconnect to Robot' : 'Connect to Robot'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Speed Selector */}
         <View style={styles.section}>
@@ -414,6 +441,36 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 16,
   },
+  connectionCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#616161',
+    marginBottom: 6,
+  },
+  textInput: {
+    backgroundColor: '#FAFAFA',
+    borderWidth: 1,
+    borderColor: '#BDBDBD',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: '#212121',
+    marginBottom: 12,
+  },
   primaryButton: {
     backgroundColor: '#6200EE',
     paddingVertical: 12,
@@ -421,7 +478,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width: '100%',
     alignItems: 'center',
-    marginBottom: 20,
   },
   connectedButton: {
     backgroundColor: '#2E7D32',

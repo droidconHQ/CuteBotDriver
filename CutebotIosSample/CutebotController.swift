@@ -44,8 +44,38 @@ public class CutebotController: NSObject, ObservableObject, CBCentralManagerDele
     // ==========================================
     // Central Manager & Connection
     // ==========================================
+    private var targetIdentifier: String = ""
+
+    public func connect(toAddressOrName identifierString: String) {
+        let trimmed = identifierString.trimmingCharacters(in: .whitespacesAndNewlines)
+        targetIdentifier = trimmed
+
+        guard centralManager.state == .poweredOn else {
+            connectionStatus = "Bluetooth Initializing..."
+            return
+        }
+
+        // 1. If it's a UUID string, check if already known to system
+        if let uuid = UUID(uuidString: trimmed) {
+            let known = centralManager.retrievePeripherals(withIdentifiers: [uuid])
+            if let peripheral = known.first {
+                connect(to: peripheral)
+                return
+            }
+        }
+
+        // 2. Start scanning for matching peripheral
+        discoveredPeripherals.removeAll()
+        connectionStatus = trimmed.isEmpty ? "Scanning for micro:bit..." : "Searching for \(trimmed)..."
+        centralManager.scanForPeripherals(
+            withServices: [CutebotController.uartServiceUUID],
+            options: [CBCentralManagerScanOptionAllowDuplicatesKey: false]
+        )
+    }
+
     public func startScanning() {
         guard centralManager.state == .poweredOn else { return }
+        targetIdentifier = ""
         discoveredPeripherals.removeAll()
         connectionStatus = "Scanning for micro:bit..."
         centralManager.scanForPeripherals(withServices: [CutebotController.uartServiceUUID], options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
@@ -86,6 +116,9 @@ public class CutebotController: NSObject, ObservableObject, CBCentralManagerDele
         switch central.state {
         case .poweredOn:
             connectionStatus = "Bluetooth Ready"
+            if !targetIdentifier.isEmpty && !isConnected {
+                connect(toAddressOrName: targetIdentifier)
+            }
         case .poweredOff:
             connectionStatus = "Bluetooth is Off"
             resetState()
@@ -101,6 +134,20 @@ public class CutebotController: NSObject, ObservableObject, CBCentralManagerDele
     public func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
         if !discoveredPeripherals.contains(where: { $0.identifier == peripheral.identifier }) {
             discoveredPeripherals.append(peripheral)
+        }
+
+        if !targetIdentifier.isEmpty && !isConnected {
+            let target = targetIdentifier.lowercased()
+            let uuid = peripheral.identifier.uuidString.lowercased()
+            let name = (peripheral.name ?? (advertisementData[CBAdvertisementDataLocalNameKey] as? String) ?? "").lowercased()
+
+            let isUUIDMatch = uuid == target
+            let isNameMatch = !name.isEmpty && (name.contains(target) || target.contains(name))
+            let isMacFormat = target.contains(":") || target.contains("-")
+
+            if isUUIDMatch || isNameMatch || isMacFormat {
+                connect(to: peripheral)
+            }
         }
     }
 

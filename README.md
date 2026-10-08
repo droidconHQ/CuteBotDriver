@@ -162,12 +162,18 @@ Look inside the repository and client application directories for boilerplate he
 * **`CutebotReactNativeSample`**: Complete React Native mobile controller app.
 
 ## Connecting to the Robot
-Make sure you have first paired the robot with your phone before running your app, the robot will need to be connected first. 
-Robots ID and MAC address are written on the bottom, they will show up in the bluetooth menu as: `BBC micro:bit[ID]` for example `BBC micro:bit[povap]`
+Robots ID and MAC address are written on the bottom, and they advertise over Bluetooth as: `BBC micro:bit [ID]` (for example `BBC micro:bit [povap]`).
 
-### Best Practices for Developers
-* **Throttling:** When linking UI joysticks or sliders to the `ML` and `MR` commands, throttle your output to send a packet no quicker than every 50ms to 100ms. Flooding the BLE buffer will cause command latency.
+* **iOS:** Do **not** attempt to pair in iOS Settings > Bluetooth (iOS intentionally filters out standard GATT UART devices). Connect directly from within the app scanner using CoreBluetooth.
+* **Android:** Ensure **Location Services (GPS) is turned ON** in your quick settings (required by Android OS for BLE scanning) and grant `BLUETOOTH_SCAN` / `BLUETOOTH_CONNECT` permissions when prompted.
+
+### Best Practices & Hardware Gotchas
+* **Motor Deadband (Minimum Usable Speed):** Due to internal gearbox friction, sending speeds between `1` and `20` will usually cause motor whine without rotating the wheels. The effective starting speed is around **`25 – 30`**. When designing joysticks or sliders, map your active speed range to start at 25+.
+* **Command Throttling & Telemetry Round-Robin:**
+  * When streaming joystick or slider updates (`F`, `B`, `ML`, `MR`, `MS`), throttle outgoing BLE packets to no faster than **every 50ms to 100ms**.
+  * Avoid blasting multiple sensor queries (`?DIST#`, `?LINE#`, `?ACCEL#`) simultaneously in the same frame. Round-robin your queries (e.g., query `?LINE` on tick 1, `?DIST` on tick 2) to avoid saturating the micro:bit's Nordic UART buffer and introducing command latency.
+* **Battery Brownouts & Sudden Disconnects:** If the robot suddenly disconnects and displays a Sad Face followed by a Happy Face reboot right as you press the throttle or reverse from a stop, this is a **battery brownout** (motor inrush current pulling the 3x AAA voltage below ~3.0V), **not** a Bluetooth software bug. Ask event staff for fresh AAA batteries.
 * **BLE UUID Reference:**
   * **UART Service:** `6E400001-B5A3-F393-E0A9-E50E24DCCA9E`
   * **RX Characteristic (Write):** `6E400003-B5A3-F393-E0A9-E50E24DCCA9E`
-  * **TX Characteristic (Notify):** `6E400002-B5A3-F393-E0A9-E50E24DCCA9E`
+  * **TX Characteristic (Notify / Indicate):** `6E400002-B5A3-F393-E0A9-E50E24DCCA9E`

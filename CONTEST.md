@@ -162,6 +162,28 @@ Send query to RX (`#`); receive asynchronous notification on TX (`#\n`):
 
 ---
 
+## 💡 Pro-Tips & Hardware Gotchas for Racers
+
+Keep these hardware quirks and connection tips in mind while tuning your app for the championship track:
+
+1. **⚡ Sudden Disconnect Under Acceleration? (Battery Brownout)**
+   * If your robot suddenly drops Bluetooth and reboots (Sad Face then Happy Face) right when pressing full throttle or reversing from a dead stop, your 3x AAA batteries are running low. Sudden motor current draw pulls the micro:bit supply voltage below ~3.0V, triggering a brownout reset.
+   * **Fix:** Grab fresh AAA batteries from the workshop booth—don't waste time debugging your Bluetooth code!
+
+2. **🚦 Motor "Deadband" (Starting Speed Threshold)**
+   * Sending motor speed between `1` and `20` will usually produce a quiet motor hum without moving the wheels due to internal gearbox friction.
+   * **Fix:** The real usable minimum starting speed is around **`25% – 30%`**. Map your joystick/slider deadzones so active movement starts at 25+.
+
+3. **🔄 Telemetry Round-Robin & Buffer Management**
+   * The micro:bit has limited BLE UART buffer space. If you stream joystick movements and query `?LINE#`, `?DIST#`, and `?ACCEL#` all within the same 10ms–20ms interval, packets will back up and create noticeable steering lag.
+   * **Fix:** Throttle motor commands to **50ms – 100ms** intervals and round-robin your telemetry queries (e.g., query `?LINE` on frame 1, `?DIST` on frame 2).
+
+4. **📱 Platform-Specific Connection Quirks**
+   * **iOS:** Do **not** look for the robot in iOS System Settings > Bluetooth (iOS intentionally filters out standard raw GATT UART peripherals). Connect directly from inside the app's scanner.
+   * **Android:** Ensure **Location Services (GPS) is turned ON** in your quick settings (required by Android OS for BLE beacon discovery) and grant `BLUETOOTH_SCAN` / `BLUETOOTH_CONNECT` permissions.
+
+---
+
 ## 🚦 Getting Started in 4 Easy Steps
 
 1. **Clone the Repo:**
@@ -182,8 +204,5 @@ Send query to RX (`#`); receive asynchronous notification on TX (`#\n`):
 
 4. **Visit the Track:**
    * Head over to the Workshop & Track Zone to try practice runs on the official printed floor track!
-
-> [!TIP]
-> **Pro-Tip on BLE Command Throttling:** When using a joystick, slider, or sensor polling loop, throttle your outgoing BLE commands to no faster than once every 50ms – 100ms. Sending hundreds of commands per second can saturate the micro:bit's BLE buffer and create control lag!
 
 **Good luck, have fun, and may the best app win! 🏎️💨**

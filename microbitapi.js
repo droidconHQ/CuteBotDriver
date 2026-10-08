@@ -5,6 +5,32 @@
 let leftSpeed = 0
 let rightSpeed = 0
 
+// Heading of the screen-normal axis for the Cutebot's upright micro:bit mount.
+// Both accelerometer and calibrated magnetic samples use the same board axes.
+// Returns -1003 if gravity or horizontal magnetic direction is unusable.
+function uprightRobotHeading(ax = 0, ay = 0, az = 0, mx = 0, my = 0, mz = 0) {
+    let gravity = Math.sqrt(ax * ax + ay * ay + az * az)
+    if (gravity < 700 || gravity > 1300) return -1003
+    // The accelerometer reads -1024 on Z when the display faces up.
+    let ux = -ax / gravity
+    let uy = -ay / gravity
+    let uz = -az / gravity
+    // Project magnetic north into the horizontal plane.
+    let vertical = mx * ux + my * uy + mz * uz
+    let nx = mx - vertical * ux
+    let ny = my - vertical * uy
+    let nz = mz - vertical * uz
+    let horizontal = Math.sqrt(nx * nx + ny * ny + nz * nz)
+    let field = Math.sqrt(mx * mx + my * my + mz * mz)
+    if (field < 1 || horizontal < field * 0.1 || 1 - uz * uz < 0.25) return -1003
+    // East = north cross up. Project forward (+Z, normal to the screen)
+    // onto east and north. If the display faces backwards, the constant
+    // 180-degree offset cancels in the app's relative turn calculations.
+    let eastZ = nx * uy - ny * ux
+    let degrees = Math.atan2(eastZ, nz) * 180 / Math.PI
+    return (Math.round(degrees) + 360) % 360
+}
+
 // Initialize Underglow NeoPixels (Pin 15 on Cutebot, 2 RGB LEDs)
 let strip = neopixel.create(DigitalPin.P15, 2, NeoPixelMode.RGB)
 
@@ -219,6 +245,19 @@ bluetooth.onUartDataReceived("#", function () {
         // and sits directly above the chassis DC drive motors, input.compassHeading() tilt
         // compensation suffers from Euler gimbal lock and magnetic motor interference, making readings noisy.
         let heading = input.compassHeading()
+        // Calling compassHeading above retains MakeCode's persistent, one-time
+        // calibration. Its board-top heading is ill-conditioned when that axis
+        // points vertically; use screen-normal heading for the upright mount.
+        let ax = input.acceleration(Dimension.X)
+        let ay = input.acceleration(Dimension.Y)
+        let az = input.acceleration(Dimension.Z)
+        let gravity = Math.sqrt(ax * ax + ay * ay + az * az)
+        if (gravity > 0 && Math.abs(az) < gravity * 0.5) {
+            heading = uprightRobotHeading(ax, ay, az,
+                input.magneticForce(Dimension.X),
+                input.magneticForce(Dimension.Y),
+                input.magneticForce(Dimension.Z))
+        }
         bluetooth.uartWriteString("COMPASS:" + heading + "#\n")
     } else if (cmd == "?ACCEL") {
         let ax = input.acceleration(Dimension.X)

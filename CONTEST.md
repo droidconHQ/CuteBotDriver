@@ -42,9 +42,33 @@ The challenge runs throughout Next App DevCon, culminating in the live champions
 
 ---
 
+## 🏁 Final Contest Rules & Track Regulations
+
+During the official championship finals, the following rules, robot allocations, and course penalties apply to all competitors:
+
+### 1. 🏎️ Robot Allocation & Batteries
+* **Assigned Robot:** You will be given a robot with fresh batteries to race with.
+* **No Vehicle Selection:** You **do not get to select your robot**—hardware is assigned by the organizers to guarantee fair competition across all teams.
+
+### 2. 🏁 Starting & Ending the Lap
+* **Starting Line:** You must start your lap **before** the checkered line.
+* **Finish Line:** You must end the lap **after crossing** the checkered line.
+
+### 3. ⚠️ Track Limits & Penalty Seconds
+* **Off-Track (+2s Penalty):** There is a **2 second penalty** if the whole robot goes out of the track.
+  * *(Edge cutting allowed: you can go one wheel out of the track without penalty!)*
+* **Skipping Tight Corners (+6s Penalty):** There is a **6 second penalty** if you skip going round each of the tight corners.
+
+### 4. ⚖️ Bonus Points & Final Lap Timing
+* **Scoring Formula:**
+  $$\text{Adjusted Lap Time} = \text{Raw Lap Time} + \text{Penalties} - \text{Bonus Deductions}$$
+* **Judges' Whim:** Bonus points will be given at the whim of the three judges!
+
+---
+
 ## 🏆 Prizes
 
-Winners are determined by the lowest **Adjusted Lap Time** (Raw Time minus Earned Bonus Deductions):
+Winners are determined by the lowest **Adjusted Lap Time** (Raw Time + Penalties minus Earned Bonus Deductions):
 
 * 🥇 **1st Place:** 1st Place Trophy + LEGO Set (NASA Hubble Space Telescope) + your very own Elecfreaks Cutebot Robot Kit!
 * 🥈 **2nd Place:** 2nd Place Trophy + Official Elecfreaks Cutebot Robot Kit + Conference Swag Pack.
@@ -78,7 +102,7 @@ Raw driving speed is only half the battle. Our judges will award **bonus seconds
 * **Novel Control Modes:** Gyroscopic/accelerometer phone tilt-steering, floating on-screen joysticks, or physical Bluetooth gamepad support.
 * **Polished Design:** A sleek, responsive UI with fluid animations, haptic feedback, dark mode, and low-latency controls.
 
-*All bonus deductions are evaluated and awarded at the judges' discretion.*
+*Bonus points will be given at the whim of the three judges.*
 
 ---
 

@@ -6,6 +6,9 @@ This setup allows you to send text commands from your smartphone app to control 
 
 *NOTE* if you are doing this at a droidCon/FlutterCon event the robots will already be flashed with the correct Micro:bit Firmware, skip this step.
 
+> [!TIP]
+> 🏁 **Competing in the Robot Rally?** Check out [CONTEST.md](https://github.com/droidconHQ/CuteBotDriver/blob/main/CONTEST.md) for full competition schedule, finals track rules, penalties, and prize criteria!
+
 ---
 
 ## Hardware Requirements
